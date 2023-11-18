@@ -42,6 +42,10 @@ public class MainFrameWindow
         JButton editButton = new JButton("Edit an Existing Record");
         JButton deleteButton = new JButton("Delete an Existing Record");
 
+        createButton.setFont(new Font("Century Gothic", Font.BOLD, 15));
+        editButton.setFont(new Font("Century Gothic", Font.BOLD, 15));
+        deleteButton.setFont(new Font("Century Gothic", Font.BOLD, 15));
+
         //Layout Manager
         BoxLayout mainMainLM = new BoxLayout(mainMainPanel, BoxLayout.X_AXIS);
         BoxLayout mainButtonLM = new BoxLayout(buttonPanel, BoxLayout.Y_AXIS);
@@ -53,6 +57,57 @@ public class MainFrameWindow
         JScrollPane scrollPane = new JScrollPane(dataTable);
 
         dataTable.setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
+
+        createButton.addActionListener(new ActionListener()
+        {
+            @Override
+            public void actionPerformed(ActionEvent e)
+            {
+                CreateFrameWindow.visibility();
+                mainFrame.dispose();
+            }
+        });
+
+        editButton.addActionListener(new ActionListener()
+        {
+            @Override
+            public void actionPerformed(ActionEvent e)
+            {
+                int row = dataTable.getSelectedRow();
+
+                if(row != -1) {
+                    Object[] rowData = new Object[columns.length];
+
+                    for(int i = 0; i < columns.length; i++) {
+                        rowData[i] = dataTable.getValueAt(row, i);
+                    }
+
+                    EditFrameWindow.visibility(rowData);
+                    mainFrame.dispose();
+                }
+                else {
+                    JOptionPane.showMessageDialog(mainFrame, "Please select a row to edit.");
+                }
+            }
+        });
+
+        deleteButton.addActionListener(new ActionListener() {
+            @Override
+            public void actionPerformed(ActionEvent e) {
+                int row = dataTable.getSelectedRow();
+
+                if(row != -1) {
+                    int patienID = (int)dataTable.getValueAt(row, 0);
+
+                    deleteData(patienID);
+
+                    refreshData(dataTable);
+                }
+                else {
+                    JOptionPane.showMessageDialog(mainFrame, "Please select a row to delete.");
+                }
+            }
+        });
 
         //Separator Configuration
         separatorV.setMaximumSize(new Dimension( 2, 775));
@@ -98,27 +153,9 @@ public class MainFrameWindow
         mainMainPanel.add(databasePanel);
 
         mainMainPanel.add(Box.createRigidArea(new Dimension(50, 0)));
-
-        deleteButton.addActionListener(new ActionListener() {
-            @Override
-            public void actionPerformed(ActionEvent e) {
-                int row = dataTable.getSelectedRow();
-
-                if(row != -1) {
-                    int patienID = (int)dataTable.getValueAt(row, 0);
-
-                    deleteData(patienID);
-
-                    refreshData(dataTable);
-                }
-                else {
-                    JOptionPane.showMessageDialog(mainFrame, "Please select a row to delete.");
-                }
-            }
-        });
     }
 
-    private static Object[][] getData()
+    public static Object[][] getData()
     {
         String query = "SELECT * FROM `patientrecord`";
 
@@ -154,23 +191,23 @@ public class MainFrameWindow
     }
 
     private static void deleteData(int patientID) {
-    String deleteQuery = "DELETE FROM `patientrecord` WHERE pID = " + patientID;
+        String deleteQuery = "DELETE FROM `patientrecord` WHERE pID = " + patientID;
 
-    try (Connection connection = Database.connect();
-         Statement statement = connection.createStatement()) {
+        try (Connection connection = Database.connect();
+            Statement statement = connection.createStatement()) {
 
-        statement.executeUpdate(deleteQuery);
+            statement.executeUpdate(deleteQuery);
 
-    } catch (SQLException e) {
-        e.printStackTrace();
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
     }
-}
 
-private static void refreshData(JTable dataTable) {
-    String[] columns = {"ID", "First Name", "Last Name", "Age", "Admission Reason", "Doctor Incharge", "Date Admitted"};
-    Object[][] data = getData();
+    private static void refreshData(JTable dataTable) {
+        String[] columns = {"ID", "First Name", "Last Name", "Age", "Admission Reason", "Doctor Incharge", "Date Admitted"};
+        Object[][] data = getData();
 
-    DefaultTableModel model = new DefaultTableModel(data, columns);
-    dataTable.setModel(model);
-}
+        DefaultTableModel model = new DefaultTableModel(data, columns);
+        dataTable.setModel(model);
+    }
 }
